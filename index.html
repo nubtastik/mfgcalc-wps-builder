@@ -838,19 +838,31 @@
 
     // Print WPS
     document.getElementById("printWps").addEventListener("click", function () {
-      const wpsHtml = document.getElementById("wps-output").innerHTML;
-      if (!wpsHtml.trim()) return;
+    const wpsHtml = document.getElementById("wps-output").innerHTML;
+    if (!wpsHtml.trim()) {
+        alert("Generate a WPS first, then print.");
+        return;
+    }
 
-      const win = window.open("", "PRINT", "height=800,width=1000");
-      win.document.write("<html><head><title>WPS</title>");
-      win.document.write("<style>body{font-family:system-ui,Segoe UI,sans-serif;font-size:12px;padding:16px;} h3,h4{margin:4px 0;} p{margin:2px 0;}</style>");
-      win.document.write("</head><body>");
-      win.document.write(wpsHtml);
-      win.document.write("</body></html>");
-      win.document.close();
-      win.focus();
-      win.print();
-      win.close();
+    const win = window.open("", "PRINT", "height=800,width=1000");
+    win.document.write("<html><head><title>WPS</title>");
+    win.document.write("<style>body{font-family:system-ui,Segoe UI,sans-serif;font-size:12px;padding:16px;} h3,h4{margin:4px 0;} p{margin:2px 0;}</style>");
+    win.document.write("</head><body>");
+    win.document.write(wpsHtml);
+    win.document.write("</body></html>");
+    win.document.close();
+
+    win.focus();
+
+    // Close the window only after the print dialog finishes
+    win.onafterprint = function () {
+        win.close();
+    };
+
+    // Give the browser a moment to render before printing
+    setTimeout(function () {
+        win.print();
+    }, 250);
     });
 
     // Download JSON
@@ -890,7 +902,6 @@
         return;
     }
 
-    // For now, reuse the print-to-PDF approach (user chooses “Save as PDF”)
     const win = window.open("", "PRINT", "height=800,width=1000");
     win.document.write("<html><head><title>WPS PDF</title>");
     win.document.write("<style>body{font-family:system-ui,Segoe UI,sans-serif;font-size:12px;padding:16px;} h3,h4{margin:4px 0;} p{margin:2px 0;}</style>");
@@ -899,10 +910,15 @@
     win.document.write("</body></html>");
     win.document.close();
     win.focus();
-    win.print();
-    win.close();
-    });
 
+    win.onafterprint = function () {
+        win.close();
+    };
+
+    setTimeout(function () {
+        win.print();
+    }, 250);
+    });
 
     // Branding defaults setup
     document.getElementById("saveBrandingDefaults")
