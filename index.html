@@ -240,16 +240,88 @@
         align-items: flex-start;
       }
     }
+
+    .mfgcalc-pro-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.mfgcalc-badge-free,
+.mfgcalc-badge-pro-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.mfgcalc-badge-free {
+  background: #111827;
+  border: 1px solid #374151;
+  color: #e5e7eb;
+}
+
+.mfgcalc-badge-pro-status {
+  background: #f59e0b;
+  border: 1px solid #fbbf24;
+  color: #111827;
+}
+
+.mfgcalc-pro-activate {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.mfgcalc-pro-activate input {
+  flex: 1 1 220px;
+  padding: 0.4rem 0.5rem;
+  border-radius: 0.35rem;
+  border: 1px solid #374151;
+  background: #020617;
+  color: #e5e7eb;
+  font-size: 0.85rem;
+}
+
+.mfgcalc-pro-activate button {
+  padding: 0.4rem 0.8rem;
+  border-radius: 0.5rem;
+  border: 1px solid #f59e0b;
+  background: #111827;
+  color: #fbbf24;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.mfgcalc-pro-activate button:hover {
+  background: #1f2937;
+}
+
   </style>
 </head>
 <body>
   <div class="mfgcalc-section">
-    <h2>Weld Procedure Specification (WPS) Builder</h2>
-    <p class="mfgcalc-subtitle">
-      A calculated approach to manufacturing &mdash; generate a customizable WPS your shop can actually use.
-    </p>
+        <h2>Weld Procedure Specification (WPS) Builder</h2>
+        <p class="mfgcalc-subtitle">
+        A calculated approach to manufacturing &mdash; generate a customizable WPS your shop can actually use.
+        </p>
 
-    <form id="wps-form">
+        <div class="mfgcalc-pro-status">
+        <span id="proStatusBadge" class="mfgcalc-badge-free">MfgCalc Free</span>
+        <span class="mfgcalc-small-note">Enter your Pro license code to unlock additional features.</span>
+        </div>
+        <div class="mfgcalc-pro-activate">
+        <input type="password" id="proCode" placeholder="Enter Pro license code" />
+        <button type="button" id="activatePro">Activate Pro</button>
+        </div>
+
+        <form id="wps-form">
+  
       <!-- General Info -->
       <fieldset>
         <legend>General Information</legend>
@@ -501,6 +573,40 @@
   </div>
 
   <script>
+        // --- Pro unlock helpers ---
+    const PRO_FLAG_KEY = "mfgcalcWpsPro";
+    const PRO_LICENSE_CODE = "MFGCALC-WPS-PRO-2025"; // <-- change this to whatever code you want
+
+    function isProActive() {
+    return localStorage.getItem(PRO_FLAG_KEY) === "1";
+    }
+
+    function setProActive() {
+    localStorage.setItem(PRO_FLAG_KEY, "1");
+    applyProUiState();
+    }
+
+    function applyProUiState() {
+    const isPro = isProActive();
+    const badge = document.getElementById("proStatusBadge");
+    const exportBtn = document.getElementById("exportPdf");
+    if (!badge || !exportBtn) return;
+
+    if (isPro) {
+        badge.textContent = "MfgCalc Pro Active";
+        badge.classList.remove("mfgcalc-badge-free");
+        badge.classList.add("mfgcalc-badge-pro-status");
+        exportBtn.disabled = false;
+        exportBtn.title = "Export WPS to PDF";
+    } else {
+        badge.textContent = "MfgCalc Free";
+        badge.classList.add("mfgcalc-badge-free");
+        badge.classList.remove("mfgcalc-badge-pro-status");
+        exportBtn.disabled = true;
+        exportBtn.title = "Pro feature";
+    }
+    }
+
     // --- Branding defaults + URL config helpers ---
     function loadBrandingDefaults() {
       let defaults = null;
@@ -766,25 +872,63 @@
       URL.revokeObjectURL(url);
     });
 
-    // Export PDF: Pro upsell
     document.getElementById("exportPdf").addEventListener("click", function () {
-      alert(
+    if (!isProActive()) {
+        alert(
         "Export to PDF is part of MfgCalc Pro.\n\n" +
         "- One-click WPS PDF export\n" +
         "- Code-specific templates (AWS D1.1, ASME IX, etc.)\n" +
         "- Save & reuse WPS libraries for your shop\n\n" +
         "Visit mfgcalc.com/pricing or contact support@mfgcalc.com to learn more."
-      );
+        );
+        return;
+    }
+
+    const wpsHtml = document.getElementById("wps-output").innerHTML;
+    if (!wpsHtml.trim()) {
+        alert("Generate a WPS first, then export to PDF.");
+        return;
+    }
+
+    // For now, reuse the print-to-PDF approach (user chooses “Save as PDF”)
+    const win = window.open("", "PRINT", "height=800,width=1000");
+    win.document.write("<html><head><title>WPS PDF</title>");
+    win.document.write("<style>body{font-family:system-ui,Segoe UI,sans-serif;font-size:12px;padding:16px;} h3,h4{margin:4px 0;} p{margin:2px 0;}</style>");
+    win.document.write("</head><body>");
+    win.document.write(wpsHtml);
+    win.document.write("</body></html>");
+    win.document.close();
+    win.focus();
+    win.print();
+    win.close();
     });
+
 
     // Branding defaults setup
     document.getElementById("saveBrandingDefaults")
-      .addEventListener("click", saveBrandingDefaults);
+    .addEventListener("click", saveBrandingDefaults);
     document.getElementById("clearBrandingDefaults")
-      .addEventListener("click", clearBrandingDefaults);
+    .addEventListener("click", clearBrandingDefaults);
 
-    // Load defaults on startup
+    // Pro activation handler
+    document.getElementById("activatePro").addEventListener("click", function () {
+    const code = document.getElementById("proCode").value.trim();
+    if (!code) {
+        alert("Please enter your Pro license code.");
+        return;
+    }
+    if (code === PRO_LICENSE_CODE) {
+        setProActive();
+        document.getElementById("proCode").value = "";
+        alert("MfgCalc Pro is now active on this browser.");
+    } else {
+        alert("Invalid license code. Please check your code or contact support@mfgcalc.com.");
+    }
+    });
+
+    // Load defaults & Pro UI on startup
     loadBrandingDefaults();
+    applyProUiState();
   </script>
 </body>
 </html>
