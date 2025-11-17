@@ -182,6 +182,7 @@
       gap: 0.5rem;
       margin-top: 1.5rem;
       margin-bottom: 0.5rem;
+      flex-wrap: wrap;
     }
 
     .mfgcalc-badge-pro {
@@ -207,6 +208,27 @@
       align-self: center;
     }
 
+    .mfgcalc-branding-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .mfgcalc-branding-actions button {
+      padding: 0.3rem 0.6rem;
+      font-size: 0.75rem;
+      border-radius: 999px;
+      border: 1px solid #374151;
+      background: #020617;
+      color: #e5e7eb;
+      cursor: pointer;
+    }
+
+    .mfgcalc-branding-actions button:hover {
+      background: #1f2937;
+    }
+
     @media (max-width: 640px) {
       .mfgcalc-section {
         margin: 1rem;
@@ -224,7 +246,7 @@
   <div class="mfgcalc-section">
     <h2>Weld Procedure Specification (WPS) Builder</h2>
     <p class="mfgcalc-subtitle">
-      A calculated approach to manufacturing — generate a customizable WPS your shop can actually use.
+      A calculated approach to manufacturing &mdash; generate a customizable WPS your shop can actually use.
     </p>
 
     <form id="wps-form">
@@ -286,6 +308,11 @@
           <input type="color" id="accentColor" value="#3b82f6" />
           <span class="mfgcalc-small-note">Used for borders &amp; headings in the WPS.</span>
         </label>
+
+        <div class="mfgcalc-branding-actions">
+          <button type="button" id="saveBrandingDefaults">Save branding as default</button>
+          <button type="button" id="clearBrandingDefaults">Clear saved branding</button>
+        </div>
       </fieldset>
 
       <!-- Base Metal -->
@@ -463,6 +490,7 @@
     <div class="mfgcalc-wps-actions">
       <button type="button" id="copyWps">Copy WPS</button>
       <button type="button" id="printWps">Print WPS</button>
+      <button type="button" id="downloadJson">Download JSON</button>
       <button type="button" id="exportPdf" disabled title="Pro feature">
         Export PDF
         <span class="mfgcalc-badge-pro"><span>PRO</span></span>
@@ -473,6 +501,46 @@
   </div>
 
   <script>
+    // --- Branding defaults + URL config helpers ---
+    function loadBrandingDefaults() {
+      let defaults = null;
+      try {
+        defaults = JSON.parse(localStorage.getItem("mfgcalcWpsBranding"));
+      } catch (e) {
+        defaults = null;
+      }
+
+      const params = new URLSearchParams(window.location.search);
+      const urlCompany = params.get("company");
+      const urlLogo = params.get("logo");
+      const urlAccent = params.get("accent");
+
+      if (!defaults) defaults = {};
+      if (urlCompany) defaults.companyName = urlCompany;
+      if (urlLogo) defaults.logoUrl = urlLogo;
+      if (urlAccent) defaults.accentColor = urlAccent;
+
+      if (defaults.companyName) document.getElementById("companyName").value = defaults.companyName;
+      if (defaults.logoUrl) document.getElementById("logoUrl").value = defaults.logoUrl;
+      if (defaults.accentColor) document.getElementById("accentColor").value = defaults.accentColor;
+    }
+
+    function saveBrandingDefaults() {
+      const data = {
+        companyName: document.getElementById("companyName").value || "",
+        logoUrl: document.getElementById("logoUrl").value || "",
+        accentColor: document.getElementById("accentColor").value || "#3b82f6",
+      };
+      localStorage.setItem("mfgcalcWpsBranding", JSON.stringify(data));
+      alert("Branding saved as default for this browser.");
+    }
+
+    function clearBrandingDefaults() {
+      localStorage.removeItem("mfgcalcWpsBranding");
+      alert("Saved branding cleared. Reload to see defaults reset.");
+    }
+
+    // --- Main submit handler ---
     document.getElementById("wps-form").addEventListener("submit", function (e) {
       e.preventDefault();
 
@@ -543,6 +611,9 @@
         },
       };
 
+      // Store latest WPS globally for JSON download
+      window.mfgcalcLastWps = wps;
+
       const output = document.getElementById("wps-output");
       output.classList.add("mfgcalc-wps");
       output.style.setProperty("--wps-accent", wps.branding.accentColor || "#3b82f6");
@@ -557,7 +628,7 @@
               ${wps.branding.companyName || "Company Name"}
             </div>
             <div class="mfgcalc-wps-tagline">
-              Weld Procedure Specification • Powered by MfgCalc
+              Weld Procedure Specification &bull; Powered by MfgCalc
             </div>
           </div>
           <div class="mfgcalc-wps-logo">
@@ -639,9 +710,11 @@
       output.scrollIntoView({ behavior: "smooth" });
     });
 
+    // Clear form and output
     document.getElementById("clearWps").addEventListener("click", function () {
       document.getElementById("wps-form").reset();
       document.getElementById("wps-output").innerHTML = "";
+      window.mfgcalcLastWps = null;
     });
 
     // Copy WPS text
@@ -674,10 +747,44 @@
       win.close();
     });
 
-    // Export PDF: Pro-only hook
-    document.getElementById("exportPdf").addEventListener("click", function () {
-      alert("Export to PDF is available in MfgCalc Pro. Contact support@mfgcalc.com to learn more.");
+    // Download JSON
+    document.getElementById("downloadJson").addEventListener("click", function () {
+      const data = window.mfgcalcLastWps;
+      if (!data) {
+        alert("Generate a WPS first, then you can download the JSON.");
+        return;
+      }
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const name = (data.general && data.general.procId) ? data.general.procId : "wps";
+      a.href = url;
+      a.download = name + ".json";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     });
+
+    // Export PDF: Pro upsell
+    document.getElementById("exportPdf").addEventListener("click", function () {
+      alert(
+        "Export to PDF is part of MfgCalc Pro.\n\n" +
+        "- One-click WPS PDF export\n" +
+        "- Code-specific templates (AWS D1.1, ASME IX, etc.)\n" +
+        "- Save & reuse WPS libraries for your shop\n\n" +
+        "Visit mfgcalc.com/pricing or contact support@mfgcalc.com to learn more."
+      );
+    });
+
+    // Branding defaults setup
+    document.getElementById("saveBrandingDefaults")
+      .addEventListener("click", saveBrandingDefaults);
+    document.getElementById("clearBrandingDefaults")
+      .addEventListener("click", clearBrandingDefaults);
+
+    // Load defaults on startup
+    loadBrandingDefaults();
   </script>
 </body>
 </html>
