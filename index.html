@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>MfgCalc – Weld Procedure Specification Builder</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #020617;
+      color: #e5e7eb;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .mfgcalc-section {
+      max-width: 1000px;
+      margin: 2rem auto;
+      padding: 1.5rem;
+      background: #0b1120;
+      color: #e5e7eb;
+      border-radius: 0.75rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .mfgcalc-section h2 {
+      font-size: 1.6rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .mfgcalc-subtitle {
+      font-size: 0.9rem;
+      color: #9ca3af;
+      margin-bottom: 1.5rem;
+    }
+
+    #wps-form {
+      display: grid;
+      gap: 1rem;
+    }
+
+    fieldset {
+      border: 1px solid #1f2937;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      background: #020617;
+    }
+
+    legend {
+      padding: 0 0.5rem;
+      font-weight: 600;
+      color: #e5e7eb;
+    }
+
+    label {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.85rem;
+      color: #d1d5db;
+    }
+
+    label input,
+    label select,
+    label textarea {
+      flex: 1 1 200px;
+      padding: 0.4rem 0.5rem;
+      border-radius: 0.35rem;
+      border: 1px solid #374151;
+      background: #020617;
+      color: #e5e7eb;
+      font-size: 0.85rem;
+    }
+
+    label textarea {
+      min-height: 3rem;
+    }
+
+    label input:focus,
+    label select:focus,
+    label textarea:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.5);
+    }
+
+    button[type="submit"],
+    button[type="button"] {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      margin-right: 0.5rem;
+    }
+
+    button[type="submit"] {
+      background: #3b82f6;
+      color: white;
+    }
+
+    button[type="button"] {
+      background: #111827;
+      color: #e5e7eb;
+      border: 1px solid #374151;
+    }
+
+    button[type="submit"]:hover {
+      background: #2563eb;
+    }
+
+    button[type="button"]:hover {
+      background: #1f2937;
+    }
+
+    #wps-output {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      border-radius: 0.75rem;
+      background: #020617;
+      border: 1px solid #1f2937;
+      font-size: 0.9rem;
+    }
+
+    /* WPS header / theming */
+    .mfgcalc-wps {
+      --wps-accent: #3b82f6;
+    }
+
+    .mfgcalc-wps-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      border-bottom: 2px solid var(--wps-accent);
+      padding-bottom: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .mfgcalc-wps-company {
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+
+    .mfgcalc-wps-tagline {
+      font-size: 0.75rem;
+      color: #9ca3af;
+    }
+
+    .mfgcalc-wps-logo img {
+      max-height: 40px;
+      max-width: 120px;
+      object-fit: contain;
+    }
+
+    .mfgcalc-wps h3 {
+      margin-top: 0.75rem;
+      font-size: 1.1rem;
+      border-bottom: 1px solid #1f2937;
+      padding-bottom: 0.25rem;
+    }
+
+    .mfgcalc-wps h4 {
+      margin-top: 0.75rem;
+      font-size: 0.95rem;
+      color: var(--wps-accent);
+    }
+
+    .mfgcalc-wps p {
+      margin: 0.1rem 0 0.3rem;
+    }
+
+    .mfgcalc-wps-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      margin-top: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .mfgcalc-badge-pro {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.15rem 0.45rem;
+      border-radius: 999px;
+      border: 1px solid #f59e0b;
+      color: #fbbf24;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .mfgcalc-badge-pro span {
+      font-size: 0.7rem;
+    }
+
+    .mfgcalc-small-note {
+      font-size: 0.75rem;
+      color: #6b7280;
+      align-self: center;
+    }
+
+    @media (max-width: 640px) {
+      .mfgcalc-section {
+        margin: 1rem;
+        padding: 1rem;
+      }
+
+      .mfgcalc-wps-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="mfgcalc-section">
+    <h2>Weld Procedure Specification (WPS) Builder</h2>
+    <p class="mfgcalc-subtitle">
+      A calculated approach to manufacturing — generate a customizable WPS your shop can actually use.
+    </p>
+
+    <form id="wps-form">
+      <!-- General Info -->
+      <fieldset>
+        <legend>General Information</legend>
+        <label>
+          Procedure ID:
+          <input type="text" id="procId" required />
+        </label>
+        <label>
+          Revision:
+          <input type="text" id="revision" value="0" />
+        </label>
+        <label>
+          Date:
+          <input type="date" id="date" />
+        </label>
+        <label>
+          Prepared By:
+          <input type="text" id="preparedBy" />
+        </label>
+        <label>
+          Approved By:
+          <input type="text" id="approvedBy" />
+        </label>
+        <label>
+          Code / Standard:
+          <select id="code">
+            <option value="AWS D1.1">AWS D1.1</option>
+            <option value="ASME IX">ASME IX</option>
+            <option value="Other">Other</option>
+          </select>
+        </label>
+        <label>
+          Welding Process:
+          <select id="process">
+            <option value="GMAW">GMAW</option>
+            <option value="FCAW">FCAW</option>
+            <option value="SMAW">SMAW</option>
+            <option value="GTAW">GTAW</option>
+          </select>
+        </label>
+      </fieldset>
+
+      <!-- Branding / Customization -->
+      <fieldset>
+        <legend>Branding &amp; Customization</legend>
+        <label>
+          Company Name (header):
+          <input type="text" id="companyName" placeholder="e.g. ACME Fabrication, LLC" />
+        </label>
+        <label>
+          Logo URL (optional):
+          <input type="url" id="logoUrl" placeholder="https://example.com/logo.png" />
+        </label>
+        <label>
+          Accent Color:
+          <input type="color" id="accentColor" value="#3b82f6" />
+          <span class="mfgcalc-small-note">Used for borders &amp; headings in the WPS.</span>
+        </label>
+      </fieldset>
+
+      <!-- Base Metal -->
+      <fieldset>
+        <legend>Base Metal</legend>
+        <label>
+          Base Metal Spec:
+          <input type="text" id="baseSpec" placeholder="e.g. ASTM A36" />
+        </label>
+        <label>
+          Base Metal Type:
+          <input type="text" id="baseType" placeholder="e.g. Carbon Steel" />
+        </label>
+        <label>
+          Thickness Range (inches):
+          <input type="number" step="0.01" id="thkMin" placeholder="min" />
+          <input type="number" step="0.01" id="thkMax" placeholder="max" />
+        </label>
+        <label>
+          Joint Type:
+          <select id="jointType">
+            <option value="Butt">Butt</option>
+            <option value="Fillet">Fillet</option>
+            <option value="T-joint">T-joint</option>
+            <option value="Lap">Lap</option>
+            <option value="Corner">Corner</option>
+          </select>
+        </label>
+      </fieldset>
+
+      <!-- Filler Metal -->
+      <fieldset>
+        <legend>Filler Metal</legend>
+        <label>
+          Filler Classification:
+          <input type="text" id="fillerClass" placeholder="e.g. ER70S-6" />
+        </label>
+        <label>
+          Filler Diameter Range (in):
+          <input type="number" step="0.01" id="fillerDiaMin" placeholder="min" />
+          <input type="number" step="0.01" id="fillerDiaMax" placeholder="max" />
+        </label>
+        <label>
+          F-Number:
+          <input type="text" id="fNumber" />
+        </label>
+        <label>
+          A-Number:
+          <input type="text" id="aNumber" />
+        </label>
+      </fieldset>
+
+      <!-- Position & Progression -->
+      <fieldset>
+        <legend>Position &amp; Progression</legend>
+        <label>
+          Welding Position:
+          <select id="position">
+            <option value="Flat">Flat (1G/1F)</option>
+            <option value="Horizontal">Horizontal (2G/2F)</option>
+            <option value="Vertical">Vertical (3G/3F)</option>
+            <option value="Overhead">Overhead (4G/4F)</option>
+            <option value="All">All positions</option>
+          </select>
+        </label>
+        <label>
+          Progression:
+          <select id="progression">
+            <option value="N/A">N/A</option>
+            <option value="Vertical Up">Vertical Up</option>
+            <option value="Vertical Down">Vertical Down</option>
+          </select>
+        </label>
+      </fieldset>
+
+      <!-- Preheat & Interpass -->
+      <fieldset>
+        <legend>Preheat &amp; Interpass</legend>
+        <label>
+          Preheat Temperature (°F, min):
+          <input type="number" id="preheatMin" />
+        </label>
+        <label>
+          Interpass Temperature (°F, max):
+          <input type="number" id="interpassMax" />
+        </label>
+        <label>
+          Preheat Method:
+          <input type="text" id="preheatMethod" placeholder="e.g. Induction, Torch" />
+        </label>
+      </fieldset>
+
+      <!-- Electrical Parameters -->
+      <fieldset>
+        <legend>Electrical Parameters</legend>
+        <label>
+          Polarity:
+          <select id="polarity">
+            <option value="DCEP">DCEP</option>
+            <option value="DCEN">DCEN</option>
+            <option value="AC">AC</option>
+          </select>
+        </label>
+        <label>
+          Current Range (A):
+          <input type="number" id="ampsMin" placeholder="min" />
+          <input type="number" id="ampsMax" placeholder="max" />
+        </label>
+        <label>
+          Voltage Range (V):
+          <input type="number" step="0.1" id="voltsMin" placeholder="min" />
+          <input type="number" step="0.1" id="voltsMax" placeholder="max" />
+        </label>
+        <label>
+          Wire Feed Speed (ipm):
+          <input type="number" id="wfsMin" placeholder="min" />
+          <input type="number" id="wfsMax" placeholder="max" />
+        </label>
+        <label>
+          Travel Speed (ipm):
+          <input type="number" id="tsMin" placeholder="min" />
+          <input type="number" id="tsMax" placeholder="max" />
+        </label>
+      </fieldset>
+
+      <!-- Shielding Gas -->
+      <fieldset>
+        <legend>Shielding Gas / Flux</legend>
+        <label>
+          Gas Type:
+          <input type="text" id="gasType" placeholder="e.g. 90Ar/10CO₂" />
+        </label>
+        <label>
+          Gas Flow Rate (CFH):
+          <input type="number" id="gasFlowMin" placeholder="min" />
+          <input type="number" id="gasFlowMax" placeholder="max" />
+        </label>
+        <label>
+          <input type="checkbox" id="selfShielded" />
+          FCAW-S / Self-shielded (no external gas)
+        </label>
+      </fieldset>
+
+      <!-- Joint & Technique -->
+      <fieldset>
+        <legend>Joint &amp; Technique</legend>
+        <label>
+          Joint Design Description:
+          <textarea id="jointDesign" rows="3"
+            placeholder="Bevel angle, root opening, backing details, etc."></textarea>
+        </label>
+        <label>
+          Backing:
+          <input type="text" id="backing" placeholder="e.g. Steel backing, None" />
+        </label>
+        <label>
+          Technique:
+          <input type="text" id="technique" placeholder="e.g. Stringer beads, short weave" />
+        </label>
+        <label>
+          Pass Sequence:
+          <textarea id="passSequence" rows="3"
+            placeholder="Root, fill, cap, typical passes, etc."></textarea>
+        </label>
+        <label>
+          Cleaning Between Passes:
+          <input type="text" id="cleaning" placeholder="e.g. Wire brush, grinding" />
+        </label>
+      </fieldset>
+
+      <button type="submit">Generate WPS</button>
+      <button type="button" id="clearWps">Clear</button>
+    </form>
+
+    <div class="mfgcalc-wps-actions">
+      <button type="button" id="copyWps">Copy WPS</button>
+      <button type="button" id="printWps">Print WPS</button>
+      <button type="button" id="exportPdf" disabled title="Pro feature">
+        Export PDF
+        <span class="mfgcalc-badge-pro"><span>PRO</span></span>
+      </button>
+    </div>
+
+    <div id="wps-output"></div>
+  </div>
+
+  <script>
+    document.getElementById("wps-form").addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const v = id => document.getElementById(id).value;
+      const c = id => document.getElementById(id).checked;
+
+      const wps = {
+        general: {
+          procId: v("procId"),
+          revision: v("revision"),
+          date: v("date"),
+          preparedBy: v("preparedBy"),
+          approvedBy: v("approvedBy"),
+          code: v("code"),
+          process: v("process"),
+        },
+        branding: {
+          companyName: v("companyName"),
+          logoUrl: v("logoUrl"),
+          accentColor: v("accentColor") || "#3b82f6",
+        },
+        baseMetal: {
+          spec: v("baseSpec"),
+          type: v("baseType"),
+          thkMin: v("thkMin"),
+          thkMax: v("thkMax"),
+          jointType: v("jointType"),
+        },
+        filler: {
+          classification: v("fillerClass"),
+          diaMin: v("fillerDiaMin"),
+          diaMax: v("fillerDiaMax"),
+          fNumber: v("fNumber"),
+          aNumber: v("aNumber"),
+        },
+        position: {
+          position: v("position"),
+          progression: v("progression"),
+        },
+        preheat: {
+          preheatMin: v("preheatMin"),
+          interpassMax: v("interpassMax"),
+          method: v("preheatMethod"),
+        },
+        electrical: {
+          polarity: v("polarity"),
+          ampsMin: v("ampsMin"),
+          ampsMax: v("ampsMax"),
+          voltsMin: v("voltsMin"),
+          voltsMax: v("voltsMax"),
+          wfsMin: v("wfsMin"),
+          wfsMax: v("wfsMax"),
+          tsMin: v("tsMin"),
+          tsMax: v("tsMax"),
+        },
+        shielding: {
+          gasType: v("gasType"),
+          gasFlowMin: v("gasFlowMin"),
+          gasFlowMax: v("gasFlowMax"),
+          selfShielded: c("selfShielded"),
+        },
+        technique: {
+          jointDesign: v("jointDesign"),
+          backing: v("backing"),
+          technique: v("technique"),
+          passSequence: v("passSequence"),
+          cleaning: v("cleaning"),
+        },
+      };
+
+      const output = document.getElementById("wps-output");
+      output.classList.add("mfgcalc-wps");
+      output.style.setProperty("--wps-accent", wps.branding.accentColor || "#3b82f6");
+
+      const out = [];
+
+      // Header (company + logo)
+      out.push(`
+        <div class="mfgcalc-wps-header">
+          <div>
+            <div class="mfgcalc-wps-company">
+              ${wps.branding.companyName || "Company Name"}
+            </div>
+            <div class="mfgcalc-wps-tagline">
+              Weld Procedure Specification • Powered by MfgCalc
+            </div>
+          </div>
+          <div class="mfgcalc-wps-logo">
+            ${
+              wps.branding.logoUrl
+                ? `<img src="${wps.branding.logoUrl}" alt="Company Logo" />`
+                : ""
+            }
+          </div>
+        </div>
+      `);
+
+      out.push(`<h3>Weld Procedure Specification (WPS)</h3>`);
+      out.push(`<p><strong>Procedure ID:</strong> ${wps.general.procId || "-"} |
+                <strong>Rev:</strong> ${wps.general.revision || "-"} |
+                <strong>Date:</strong> ${wps.general.date || "-"}</p>`);
+      out.push(`<p><strong>Prepared By:</strong> ${wps.general.preparedBy || "-"} |
+                <strong>Approved By:</strong> ${wps.general.approvedBy || "-"}</p>`);
+      out.push(`<p><strong>Code:</strong> ${wps.general.code || "-"} |
+                <strong>Process:</strong> ${wps.general.process || "-"}</p>`);
+
+      out.push(`<h4>Base Metal</h4>
+        <p><strong>Spec:</strong> ${wps.baseMetal.spec || "-"} |
+        <strong>Type:</strong> ${wps.baseMetal.type || "-"} |
+        <strong>Thickness Range (in):</strong> ${wps.baseMetal.thkMin || "-"} to ${wps.baseMetal.thkMax || "-"}</p>
+        <p><strong>Joint Type:</strong> ${wps.baseMetal.jointType || "-"}</p>
+      `);
+
+      out.push(`<h4>Filler Metal</h4>
+        <p><strong>Classification:</strong> ${wps.filler.classification || "-"} |
+        <strong>Diameter Range (in):</strong> ${wps.filler.diaMin || "-"} to ${wps.filler.diaMax || "-"}</p>
+        <p><strong>F-Number:</strong> ${wps.filler.fNumber || "-"} |
+        <strong>A-Number:</strong> ${wps.filler.aNumber || "-"}</p>
+      `);
+
+      out.push(`<h4>Position &amp; Progression</h4>
+        <p><strong>Position:</strong> ${wps.position.position || "-"} |
+        <strong>Progression:</strong> ${wps.position.progression || "-"}</p>
+      `);
+
+      out.push(`<h4>Preheat &amp; Interpass</h4>
+        <p><strong>Preheat Min (°F):</strong> ${wps.preheat.preheatMin || "-"} |
+        <strong>Interpass Max (°F):</strong> ${wps.preheat.interpassMax || "-"}</p>
+        <p><strong>Preheat Method:</strong> ${wps.preheat.method || "-"}</p>
+      `);
+
+      out.push(`<h4>Electrical Parameters</h4>
+        <p><strong>Polarity:</strong> ${wps.electrical.polarity || "-"}</p>
+        <p><strong>Current Range (A):</strong> ${wps.electrical.ampsMin || "-"} to ${wps.electrical.ampsMax || "-"}</p>
+        <p><strong>Voltage Range (V):</strong> ${wps.electrical.voltsMin || "-"} to ${wps.electrical.voltsMax || "-"}</p>
+        <p><strong>Wire Feed Speed (ipm):</strong> ${wps.electrical.wfsMin || "-"} to ${wps.electrical.wfsMax || "-"}</p>
+        <p><strong>Travel Speed (ipm):</strong> ${wps.electrical.tsMin || "-"} to ${wps.electrical.tsMax || "-"}</p>
+      `);
+
+      let gasText = "";
+      if (wps.shielding.selfShielded) {
+        gasText = "Self-shielded (FCAW-S, no external gas)";
+      } else {
+        gasText =
+          `${wps.shielding.gasType || "-"} | ` +
+          `Flow (CFH): ${wps.shielding.gasFlowMin || "-"} to ${wps.shielding.gasFlowMax || "-"}`;
+      }
+
+      out.push(`<h4>Shielding Gas / Flux</h4>
+        <p>${gasText}</p>
+      `);
+
+      out.push(`<h4>Joint &amp; Technique</h4>
+        <p><strong>Joint Design:</strong><br>${(wps.technique.jointDesign || "-")
+          .replace(/\n/g, "<br>")}</p>
+        <p><strong>Backing:</strong> ${wps.technique.backing || "-"}</p>
+        <p><strong>Technique:</strong> ${wps.technique.technique || "-"}</p>
+        <p><strong>Pass Sequence:</strong><br>${(wps.technique.passSequence || "-")
+          .replace(/\n/g, "<br>")}</p>
+        <p><strong>Cleaning Between Passes:</strong> ${wps.technique.cleaning || "-"}</p>
+      `);
+
+      output.innerHTML = out.join("\n");
+      output.scrollIntoView({ behavior: "smooth" });
+    });
+
+    document.getElementById("clearWps").addEventListener("click", function () {
+      document.getElementById("wps-form").reset();
+      document.getElementById("wps-output").innerHTML = "";
+    });
+
+    // Copy WPS text
+    document.getElementById("copyWps").addEventListener("click", function () {
+      const output = document.getElementById("wps-output");
+      if (!output.textContent.trim()) return;
+      const temp = document.createElement("textarea");
+      temp.value = output.innerText;
+      document.body.appendChild(temp);
+      temp.select();
+      document.execCommand("copy");
+      document.body.removeChild(temp);
+      alert("WPS copied to clipboard.");
+    });
+
+    // Print WPS
+    document.getElementById("printWps").addEventListener("click", function () {
+      const wpsHtml = document.getElementById("wps-output").innerHTML;
+      if (!wpsHtml.trim()) return;
+
+      const win = window.open("", "PRINT", "height=800,width=1000");
+      win.document.write("<html><head><title>WPS</title>");
+      win.document.write("<style>body{font-family:system-ui,Segoe UI,sans-serif;font-size:12px;padding:16px;} h3,h4{margin:4px 0;} p{margin:2px 0;}</style>");
+      win.document.write("</head><body>");
+      win.document.write(wpsHtml);
+      win.document.write("</body></html>");
+      win.document.close();
+      win.focus();
+      win.print();
+      win.close();
+    });
+
+    // Export PDF: Pro-only hook
+    document.getElementById("exportPdf").addEventListener("click", function () {
+      alert("Export to PDF is available in MfgCalc Pro. Contact support@mfgcalc.com to learn more.");
+    });
+  </script>
+</body>
+</html>
